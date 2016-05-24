@@ -1,0 +1,2 @@
+Interpret program:
+defn hello () : (printf("Hello ")) defn world () : (printf("World\n")) defn main () : (hello() world()) main()

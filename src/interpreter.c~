@@ -1,0 +1,138 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include "utils.h"
+#include "ast.h"
+#include "interpreter.h"
+
+
+int obj_type (Obj* o) {
+	return o->obj_type;
+}
+
+NullObj* make_null_obj (){
+	NullObj* null;
+	null = (NullObj* ) malloc (sizeof(NullObj)); 
+	return null;
+}
+
+IntObj* make_int_obj (int value){
+	IntObj* obj;
+	obj = (IntObj*) malloc (sizeof(IntObj));
+	obj->value = value;
+	return obj;	
+}
+
+IntObj* add (IntObj* x, IntObj* y){
+	res = (IntObj*) malloc (sizeof(IntObj));
+	res->value = x->value + y->value;
+	return res;	
+}
+IntObj* sub (IntObj* x, IntObj* y){
+	res = (IntObj*) malloc (sizeof(IntObj));
+	res->value = x->value - y->value;
+	return res;	
+}
+
+Obj* lt (IntObj* x, IntObj* y){
+   res = (Obj*) malloc (sizeof(Obj));
+   if ( x->value < y->value ){
+	   res->tag = Type.INT_TYPE;
+	   res->value.num = 0;
+   }
+	else{
+	   res->tag = Type.NULL_TYPE;
+	   res->value = make_null_obj()
+   }
+	return res;	
+}
+Obj* le (IntObj* x, IntObj* y){
+   res = (Obj*) malloc (sizeof(Obj));
+   if ( x->value <= y->value ){
+	   res->tag = Type.INT_TYPE;
+	   res->value = 0;
+   }
+	else{
+	   res->tag = Type.NULL_TYPE;
+	   res->value = make_null_obj()
+   }
+	return res;	
+}
+
+Obj* gt (IntObj* x, IntObj* y){
+   res = (Obj*) malloc (sizeof(Obj));
+   if ( x->value > y->value ){
+	   res->tag = Type.INT_TYPE;
+	   res->value = 0;
+   }
+	else{
+	   res->tag = Type.NULL_TYPE;
+	   res->value = make_null_obj()
+   }
+	return res;		
+}
+
+ArrayObj* make_array_obj (int value){
+	ArrayObj* arr ;
+	check_ptr(arr = (ArrayObj*) malloc(sizeof(ArrayObj*)));
+	arr->length = value;
+	Obj* elems = (Obj*) malloc(length * sizeof(Obj));
+	arr->elems = elems;	
+	return arr;
+}
+
+IntObj* array_length (ArrayObj* a){
+	return a->length;
+}
+
+NullObj* array_set (ArrayObj* a, IntObj* i, Obj* v){
+	a->elems[i->value] = v;
+	return make_null_obj();
+}
+
+
+Obj* array_get (ArrayObj* a, IntObj* i){
+	return a->elems[i->value];
+}
+
+/*Environment Objects */
+EnvObj* make_env_obj (Obj* parent){
+	EnvObj* env = (EnvObj*) malloc(sizeof(EnvObj));
+	env->parent = parent;
+	return env;
+}
+
+void add_entry (EnvObj* env, char* name,  Entry* entry){
+   EntryDescriptor* desc = (EntryDescriptor*) malloc(sizeof(EntryDescriptor));
+   desc->name = name;
+   desc->entry = entry;
+   if(env->head == NULL){
+	   env->head = desc;
+	   env->tail = desc;
+   }else{
+	   env->tail->next = desc;
+   }	
+}
+
+
+Entry* get_entry (EnvObj* env, char* name){
+	
+	EntryDescriptor* desc = env->head;
+	Entry* entry;
+	while(desc != NULL){
+		if(strcmp(desc->name, name)== 0){
+		    entry = desc->entry;
+		    return entry;
+		}
+		desc = desc->next;
+	}
+	return entry;
+}
+
+
+
+void interpret (ScopeStmt* stmt) {
+  printf("Interpret program:\n");
+  print_scopestmt(stmt);
+  printf("\n");  
+}
