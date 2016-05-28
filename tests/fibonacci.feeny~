@@ -14,10 +14,12 @@ defn fib (n) :
       b   
 
 defn main () :
-   var i = 0
-   while i < 20 :
-      printf("Fib(~) = ~\n", i, fib(i))
-      i = i + 1
+  printf("Fib(~) = ~\n", 1, fib(1))
+  printf("Fib(~) = ~\n", 2, fib(2))
+  printf("Fib(~) = ~\n", 3, fib(3))
+  printf("Fib(~) = ~\n", 4, fib(4))
+  printf("Fib(~) = ~\n", 5, fib(5))
+  printf("Fib(~) = ~\n", 6, fib(6))
 
 main()
 

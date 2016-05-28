@@ -108,8 +108,14 @@ NullObj* make_null_obj ();
 IntObj* make_int_obj (int value);
 IntObj* add (IntObj* x, IntObj* y);
 IntObj* sub (IntObj* x, IntObj* y);
+IntObj* mul (IntObj* x, IntObj* y);
+IntObj* divd (IntObj* x, IntObj* y);
+IntObj* mod (IntObj* x, IntObj* y);
+Obj* eq (IntObj* x, IntObj* y);
 Obj* lt (IntObj* x, IntObj* y);
 Obj* le (IntObj* x, IntObj* y);
+Obj* gt (IntObj* x, IntObj* y);
+Obj* ge (IntObj* x, IntObj* y);
 
 
 /*Array objects */
@@ -123,7 +129,7 @@ Obj* array_get (ArrayObj* a, IntObj* i);
 EnvObj* make_env_obj (Obj* parent);
 void add_entry (EnvObj* env, char* name,  Entry* entry);
 Entry* get_entry (EnvObj* env, char* name);
-Entry* make_entry(Type type, Obj* obj);
+Entry* make_entry( Obj* obj);
 
 Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e);
 

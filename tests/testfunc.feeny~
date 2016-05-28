@@ -1,0 +1,12 @@
+defn func (n) :
+      n = n - 1
+         
+
+defn main () :
+   var i = 0
+   while i < 20 :
+      printf(" i =  ~\n", func(i))
+      i = i + 1
+      printf(" i =  ~\n", func(i))
+
+main()
