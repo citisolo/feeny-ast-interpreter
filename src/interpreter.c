@@ -298,55 +298,99 @@ Entry* make_entry( Obj* obj){
 
 Obj* call_builtin_slot(EnvObj* genv, EnvObj* env, Obj* object_ref, CallSlotExp* e2 ){
 	    Obj* res;
-	    if(strcmp(e2->name, "add") == 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			IntObj* val = add(object_ref->value.num, method_arg->value.num);
-			res = make_var_object("", INT_TYPE, val);
-		}
-		else if (strcmp(e2->name, "sub") == 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			IntObj* val = sub(object_ref->value.num, method_arg->value.num);
-			res = make_var_object("", INT_TYPE, val);
-		}
-		else if (strcmp(e2->name, "mul") == 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			IntObj* val = mul(object_ref->value.num, method_arg->value.num);
-			res = make_var_object("", INT_TYPE, val);			
-		}
-		else if (strcmp(e2->name, "divd")== 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			IntObj* val = divd(object_ref->value.num, method_arg->value.num);
-			res = make_var_object("", INT_TYPE, val);
-		}
-		else if (strcmp(e2->name, "mod")== 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			IntObj* val = mod(object_ref->value.num, method_arg->value.num);
-			res = make_var_object("", INT_TYPE, val);
-		}
-		else if (strcmp(e2->name, "eq")== 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			res = eq(object_ref->value.num, method_arg->value.num);
-		}
-		else if (strcmp(e2->name, "lt")== 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			res = lt(object_ref->value.num, method_arg->value.num);
-		}
-		else if (strcmp(e2->name, "le")== 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			res = le(object_ref->value.num, method_arg->value.num);
-		}
-		else if (strcmp(e2->name, "gt")== 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			res = gt(object_ref->value.num, method_arg->value.num);
+	    switch(object_ref->tag){
+		
+		case INT_TYPE:{
+			if(strcmp(e2->name, "add") == 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				IntObj* val = add(object_ref->value.num, method_arg->value.num);
+				res = make_var_object("", INT_TYPE, val);
+			}
+			else if (strcmp(e2->name, "sub") == 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				IntObj* val = sub(object_ref->value.num, method_arg->value.num);
+				res = make_var_object("", INT_TYPE, val);
+			}
+			else if (strcmp(e2->name, "mul") == 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				IntObj* val = mul(object_ref->value.num, method_arg->value.num);
+				res = make_var_object("", INT_TYPE, val);			
+			}
+			else if (strcmp(e2->name, "div")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				IntObj* val = divd(object_ref->value.num, method_arg->value.num);
+				res = make_var_object("", INT_TYPE, val);
+			}
+			else if (strcmp(e2->name, "mod")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				IntObj* val = mod(object_ref->value.num, method_arg->value.num);
+				res = make_var_object("", INT_TYPE, val);
+			}
+			else if (strcmp(e2->name, "eq")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				res = eq(object_ref->value.num, method_arg->value.num);
+			}
+			else if (strcmp(e2->name, "lt")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				res = lt(object_ref->value.num, method_arg->value.num);
+			}
+			else if (strcmp(e2->name, "le")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				res = le(object_ref->value.num, method_arg->value.num);
+			}
+			else if (strcmp(e2->name, "gt")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				res = gt(object_ref->value.num, method_arg->value.num);
 
-		}
-		else if (strcmp(e2->name, "ge")== 0){
-			Obj* method_arg = eval_exp(genv, env, e2->args[0]);
-			res = ge(object_ref->value.num, method_arg->value.num);
-		}else{
-		  printf("No  operation %s defined for built-in object\n", e2->name);
-          exit(-1);
-		}
+			}
+			else if (strcmp(e2->name, "ge")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				res = ge(object_ref->value.num, method_arg->value.num);
+			}else{
+			  printf("No  operation %s defined for built-in object\n", e2->name);
+			  exit(-1);
+			}
+			break;
+	      }
+	    case ARRAY_TYPE:
+	      {
+			  			
+			if (strcmp(e2->name, "get")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				if (method_arg->tag != INT_TYPE){
+					printf("Array index must be integer value\n");
+					exit(-1);					
+				}else if (method_arg->value.num->value >= object_ref->value.arr->length){
+					printf("Array index out of bounds error\n");
+					exit(-1);
+				}
+                res = array_get(object_ref->value.arr, method_arg->value.num);
+			}
+			else if (strcmp(e2->name, "set")== 0){
+				Obj* method_arg = eval_exp(genv, env, e2->args[0]);
+				Obj* method_arg2 = eval_exp(genv, env, e2->args[1]);
+				if (method_arg->tag != INT_TYPE){
+					printf("Array index must be integer value\n");
+					exit(-1);					
+				}
+				NullObj* null = array_set(object_ref->value.arr, method_arg->value.num, method_arg2);
+				res = make_var_object("", NULL_TYPE, null); 
+			}
+			else if (strcmp(e2->name, "length")== 0){
+				IntObj* len = array_length(object_ref->value.arr);
+				res = make_var_object("", INT_TYPE, len);
+			}
+			else{
+			  printf("No  operation %s defined for built-in object\n", e2->name);
+			  exit(-1);
+			}
+			break;
+		  }
+		  default:
+			  printf("No  operation %s defined for built-in object\n", e2->name);
+			  exit(-1);
+			
+	}
         return res;
 
 }
@@ -508,7 +552,7 @@ Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e){
   case CALL_SLOT_EXP:{
     CallSlotExp* e2 = (CallSlotExp*)e;
     Obj* object_ref = eval_exp(genv, env, e2->exp);
-    if(object_ref->tag == INT_TYPE){
+    if(object_ref->tag == INT_TYPE || object_ref->tag == ARRAY_TYPE){
 		res = call_builtin_slot(genv, env, object_ref, e2);
     }else{
 		Obj* fn_ref = lookup_symbol(genv, object_ref->value.env, e2->name);
@@ -553,12 +597,18 @@ Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e){
 		    arg_copy =  make_var_object(fn->value.code->args[i], INT_TYPE, num);
 		    break;
 		}
-	    case NULL_TYPE:
+	    case NULL_TYPE:{
 	        arg_copy =  make_var_object(fn->value.code->args[i], NULL_TYPE, make_null_obj());
 	        break;
+		}
 	    case CODE:
 	        printf("Functions are not implemented as first class objects");
+	        exit(-1);
 	        break;
+	    case ARRAY_TYPE:{
+	        arg_copy = arg_ref;
+	        break;
+	        }
 	    default:
           printf("Unrecognized object with tag %d passed to function %s \n", arg_ref->tag, e2->name );
           exit(-1);                   
