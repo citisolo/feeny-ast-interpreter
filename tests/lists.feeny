@@ -28,6 +28,7 @@ defn cons (a, b) :
       method length () :
          1 + this.tail.length()
 
+
       method append (b) :
          cons(this.head, this.tail.append(b))
 

@@ -8,8 +8,16 @@
 
 	      
 
-
-
+void copy_obj(Obj* src, Obj* des){
+	des = (Obj*) malloc(sizeof(Obj));
+	union Value* val =  (union Value*) malloc(sizeof(union Value));
+	memcpy(val, &src->value, sizeof(union Value));
+    des->value = *val;
+    des->tag = src->tag;
+    des->obj_type = src->obj_type;
+    des->name = src->name;
+	
+}
 
 int obj_type (Obj* o) {
 	return o->obj_type;
@@ -199,6 +207,7 @@ EnvObj* make_env_obj (Obj* parent){
 	EnvObj* env = (EnvObj*) malloc(sizeof(EnvObj));
 	env->obj_type = ENV_OBJ;
 	env->parent = parent;
+	env->head = NULL;
 	return env;
 }
 
@@ -495,14 +504,14 @@ Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e){
 
     EnvObj* objenv = make_env_obj(p);
     for(int i=0; i< e2->nslots; i++){
-	  Obj* obj = eval_stmt(genv, env, e2->slots[i]);
-	  if(obj->tag == DATA){
-		Entry* ent = make_entry(obj);
-		add_entry(objenv,obj->name, ent);
-	  }else{
-		obj->value.code->nargs = e2->nslots; /* add num of args to codeval*/
+	  Obj* obj = eval_stmt(env, objenv, e2->slots[i]);
+      if (obj->tag == CODE){
+		/*obj->value.code->nargs = e2->nslots;  add num of args to codeval*/
 		Entry* ent = make_entry(obj); 
-		add_entry(objenv, obj->name, ent);
+		/*add_entry(objenv, obj->name, ent);*/
+	  }else{
+		Entry* ent = make_entry(obj);
+		/*add_entry(objenv,obj->name, ent);*/
 	  }
     }
     
@@ -514,15 +523,17 @@ Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e){
   }
   case SLOT_EXP:{
     SlotExp* e2 = (SlotExp*)e;
-    res = eval_exp(genv, env, e2->exp);
-    res->name = e2->name;
+    /*res = eval_exp(genv, env, e2->exp);
+    res->name = e2->name;*/
+    Obj* rec = eval_exp(genv, env, e2->exp);
+    res = lookup_symbol(genv, rec->value.env, e2->name); 
     break;
   }
   case SET_SLOT_EXP:{
     SetSlotExp* e2 = (SetSlotExp*)e;
     Obj* object_ref = eval_exp(genv, env, e2->exp);
     Obj* slot_ref = lookup_symbol(genv, object_ref->value.env, e2->name);
-    Obj* value = eval_exp(genv, object_ref->value.env, e2->value);
+    Obj* value = eval_exp(genv, env, e2->value);
     slot_ref->tag = value->tag;
     slot_ref->value = value->value;
     /*
@@ -543,7 +554,7 @@ Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e){
 		 slot_ref->value.env = (EnvObj*)value->value.env;
 		 break;
 	   default:
-          printf("Unrecognized object with tag %d\n", tag);
+          printf("Unrecognized object with tag %d\n", value->tag);
           exit(-1);
 	}*/
     res = slot_ref;
@@ -558,18 +569,58 @@ Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e){
 		Obj* fn_ref = lookup_symbol(genv, object_ref->value.env, e2->name);
 		Obj* parent = make_var_object("", ENV_OBJ, genv);
 		EnvObj* nenv = make_env_obj(parent);
+
 		if(e2->nargs != fn_ref->value.code->nargs){
-			printf("method %s called with wrong number of args \n",e2->name);
+			printf("method %s called with wrong number of args %d:%d\n",e2->name, e2->nargs, fn_ref->value.code->nargs  );
 			exit(-1);
 		}
 			
 		Entry* ent = make_entry(object_ref);/*should be a var value*/
+
 		add_entry(nenv, "this", ent);
+		/*
 		for(int i=0; i<e2->nargs; i++){
 			Obj* method_arg = eval_exp(genv, env, e2->args[i]);
 			Entry* method_arg_entry = make_entry(method_arg);
 			add_entry(nenv, fn_ref->value.code->args[i], method_arg_entry);
-		}
+		}*/
+        for(int i=0; i<e2->nargs; i++){
+         Obj* arg_ref = eval_exp(genv, env, e2->args[i]);
+         Obj* arg_copy ;
+         switch (arg_ref->tag){
+		 case INT_TYPE: {
+		     IntObj* num = make_int_obj(arg_ref->value.num->value);
+		     arg_copy =  make_var_object(fn_ref->value.code->args[i], INT_TYPE, num);
+		     break;
+		 }
+	     case NULL_TYPE:{
+	         arg_copy =  make_var_object(fn_ref->value.code->args[i], NULL_TYPE, make_null_obj());
+	         break;
+		 }
+	     case CODE:
+	         printf("Functions are not implemented as first class objects");
+	         exit(-1);
+	         break;
+	     case ARRAY_TYPE:{
+	         arg_copy = arg_ref;
+	         break;
+	         }
+	     default:
+	       /*copy_obj(arg_ref, arg_copy);*/
+           arg_copy = arg_ref;                
+		    
+	      }	
+	     Entry* function_arg_entry = make_entry(arg_copy);
+	     add_entry(nenv, fn_ref->value.code->args[i], function_arg_entry);
+	    }	
+		
+
+	    /*if(strcmp(e2->name, "length")==0){
+			print_exp(e2->exp);
+			print_scopestmt(fn_ref->value.code->stmt);
+			printf("\n");
+		}*/
+
 		res = eval_stmt(genv, nenv, fn_ref->value.code->stmt);		
 
 	}
@@ -610,8 +661,7 @@ Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e){
 	        break;
 	        }
 	    default:
-          printf("Unrecognized object with tag %d passed to function %s \n", arg_ref->tag, e2->name );
-          exit(-1);                   
+          arg_copy = arg_ref;                 
 		    
 	   }
        
@@ -628,6 +678,33 @@ Obj* eval_exp (EnvObj* genv, EnvObj* env, Exp* e){
     Obj* val = eval_exp(genv, env, e2->exp);
     obj->tag = val->tag;
     obj->value = val->value;
+    /*
+    switch(value->tag){
+	   case INT_TYPE:
+	     obj->value.num = (IntObj*)value->value.num;
+	     break;
+	   case NULL_TYPE:
+	     obj->value.null = (NullObj*)value->value.null;
+	     break;
+	   case CODE:
+	     obj->value.code = (CodeEntry*)value->value.code;
+	     break;
+	   case DATA:
+		 obj->value.data = (DataEntry*)value->value.data;
+		 break;
+	   case ENV_OBJ:
+		 obj->value.env = (EnvObj*) malloc(sizeof(EnvObj));
+		 EntryDescriptor* head = value->value.env->head;
+		 while(head != NULL){
+			 obj->value.env->head = malloc(sizeof(EntryDescriptor*));
+			 
+		 }
+		 (EnvObj*)value->value.env;
+		 break;
+	   default:
+          printf("Unrecognized object with tag %d\n", value->tag);
+          exit(-1);
+	}*/
     res = obj;
     break;
   }
@@ -698,6 +775,7 @@ void exec_stmt (EnvObj* genv, EnvObj* env, ScopeStmt* s ){
     code->obj_type = CODE;
 	
 	code->args = s2->args;
+	code->nargs = s2->nargs;
 	code->stmt = s2->body;
 	
 	Obj* code_object = (Obj*) malloc (sizeof(Obj));
@@ -742,10 +820,13 @@ Obj* eval_stmt (EnvObj* genv, EnvObj* env, ScopeStmt* s ){
 		printf("variable %s cannot be defined twice\n", s2->name);
         exit(-1);
 	}
+	Obj* o = malloc(sizeof(Obj));
+	o->tag = obj->tag; /* these few lines are worth 20 hours of debugging*/
+	o->value = obj->value;
     entry->obj_type = ENTRY;
-    entry->object = obj;
+    entry->object = o;
     add_entry(env, s2->name, entry); 
-    Obj* o = make_var_object("", NULL_TYPE, make_null_obj);
+    /*Obj* o = make_var_object("", NULL_TYPE, make_null_obj);*/
     res = o;
     break;
   }
@@ -761,6 +842,7 @@ Obj* eval_stmt (EnvObj* genv, EnvObj* env, ScopeStmt* s ){
     CodeEntry* code = (CodeEntry* ) malloc (sizeof(CodeEntry));
     code->obj_type = CODE;
 	code->args = s2->args;
+	code->nargs = s2->nargs;
 	code->stmt = s2->body;
 	
 	Obj* code_object = (Obj*) malloc (sizeof(Obj));
@@ -772,8 +854,8 @@ Obj* eval_stmt (EnvObj* genv, EnvObj* env, ScopeStmt* s ){
 	entry->object  = code_object;
 	
 	add_entry(env, s2->name, entry);
-    Obj* o = make_var_object("", NULL_TYPE, make_null_obj);
-    res = o;
+    /*Obj* o = make_var_object("", NULL_TYPE, make_null_obj);*/
+    res = code_object;
     break;
   }
   case SEQ_STMT:{

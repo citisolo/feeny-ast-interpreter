@@ -43,18 +43,20 @@ struct IntObj {
 	
 };
 
-struct Obj{
-	Type obj_type;
-	Type tag;
-	char* name;
-	union {
+union Value{
 		IntObj* num;
 		NullObj* null;
 		CodeEntry* code;
 		DataEntry* data;
 		EnvObj* env;
 		ArrayObj* arr;
-	}value;
+	} ;
+	
+struct Obj{
+	Type obj_type;
+	Type tag;
+	char* name;
+    union Value value;
 };
 
 struct ArrayObj {

@@ -1,2 +1,4 @@
 Interpret program:
-defn main () : (printf("Hello World\n")) main()
+Hello World
+
+
